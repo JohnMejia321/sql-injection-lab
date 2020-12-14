@@ -1,20 +1,29 @@
+
+
 const express = require('express');
 const router = express.Router();
 
 /* GET users listing. */
-function usersRouter(connection, db) {
-  router.get('/', async function (req, res, next) {
-    // const connection = await connect();
-    const query = req.query.id ? `select first_name, last_name from users where id = ${req.query.id} and role = 'Vendedor'`
-      : `select first_name, last_name from users where role = 'Vendedor'`;
-
-    // query to database. Mysql and Oracle modules have different ways to query, this is why the if is needed.
+router.get('/', async function (req, res, next) {
+  const connection = await connect();
+  id = req.query.id;
+  console.log(id);
+  if(id){
+    query = "select first_name, last_name from users where id = ? and role = 'vendedor'";
+    }else{
+      query = "select first_name, last_name from users where role = 'vendedor'";
+    }
+      // query to database. Mysql and Oracle modules have different ways to query, this is why the if is needed.
     if (db === 'oracle') {
       try {
         const results = await connection.execute(query, []);
         res.send(results.rows);
       } catch (err) {
         console.log('Ouch!', err)
+      } finally {
+        if (connection) { // connection assignment worked, need to close
+          await connection.close()
+        }
       }
     } else {
       const request = connection.query(query, (error, results, fields) => {
@@ -24,6 +33,16 @@ function usersRouter(connection, db) {
       console.log(request.sql)
     }
   });
-  return router;
+  async function Connect() {
+    const config = {
+        user: 'SYSDBA',
+        password: 'amorcito123',
+        connectString: 'localhost:1521/orcl',
+        privilege: oracledb.SYSDBA
+    }
+    let connection = await oracledb.getConnection(config);
+    
+return connection;
 }
-module.exports = usersRouter;
+
+module.exports = router;
